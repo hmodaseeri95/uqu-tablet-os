@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="UQU Tablet OS واجهة لوحي لطلاب جامعة أم القرى لتنظيم مهام اليوم والتنبيهات العاجلة.">
+  <meta name="description" content="UQU Tablet OS نموذج لوحي لطلاب جامعة أم القرى: ترحيب، جدول قابل للتعديل، ومهام تصل من الدكتور مباشرة.">
   <meta name="theme-color" content="#0f766e">
   <meta property="og:title" content="UQU Tablet OS">
-  <meta property="og:description" content="واجهة لوحي لتنظيم مهام طلاب جامعة أم القرى.">
+  <meta property="og:description" content="نموذج لوحي لتنظيم يوم الطالب في جامعة أم القرى.">
   <meta property="og:locale" content="ar_SA">
   <title>UQU Tablet OS | جامعة أم القرى</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Arial' font-size='15' font-weight='700' fill='white'%3EU%3C/text%3E%3C/svg%3E">
@@ -14,6 +14,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    try {
+      var savedBoot = JSON.parse(localStorage.getItem("uqu-tablet-os-v2") || "null");
+      if (savedBoot && savedBoot.profile && savedBoot.profile.onboarded) {
+        document.documentElement.classList.add("is-ready");
+      }
+    } catch (err) {}
+  </script>
 </head>
 <body>
   <div class="desk">
@@ -26,7 +34,7 @@
       <div class="screen">
         <div class="statusbar">
           <time id="clock">--:--</time>
-          <span class="statusbar__center">متصل</span>
+          <button class="statusbar__center" id="shade-toggle" type="button">متصل</button>
           <span class="statusbar__icons">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="currentColor" d="M12 18.5a1.5 1.5 0 1 0 .001 3.001A1.5 1.5 0 0 0 12 18.5Zm-4.24-3.05 1.42 1.41a3.9 3.9 0 0 1 5.64 0l1.42-1.41a5.9 5.9 0 0 0-8.48 0Zm-2.83-2.82 1.41 1.41a7.9 7.9 0 0 1 11.32 0l1.41-1.41a9.9 9.9 0 0 0-14.14 0Z"/>
@@ -36,10 +44,13 @@
         </div>
 
         <header class="topbar">
-          <div class="user">
-            <span class="avatar" aria-hidden="true">م</span>
-            <span>أهلاً، محمد آل مهديه</span>
-          </div>
+          <button class="user" id="open-profile" type="button">
+            <span class="avatar" id="avatar" aria-hidden="true">م</span>
+            <span class="user__text">
+              <span id="hello-name">أهلاً</span>
+              <span id="hello-id">الرقم الجامعي</span>
+            </span>
+          </button>
           <div class="brand">
             <h1>UQU Tablet OS</h1>
             <p>جامعة أم القرى</p>
@@ -47,125 +58,62 @@
           <time id="today-date" class="date">اليوم</time>
         </header>
 
-        <main class="dashboard">
-          <section class="card card--progress" aria-labelledby="progress-title">
-            <h2 id="progress-title">مؤشر الإنجاز</h2>
-            <div
-              class="ring"
-              id="progress"
-              role="progressbar"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow="65"
-              aria-valuetext="65 بالمئة مكتمل"
-              aria-label="إنجاز اليوم"
-            >
-              <svg class="ring__svg" viewBox="0 0 120 120" aria-hidden="true">
-                <circle class="ring__track" cx="60" cy="60" r="46"></circle>
-                <circle class="ring__value" cx="60" cy="60" r="46"></circle>
-              </svg>
-              <div class="ring__center">
-                <strong id="progress-value" data-value="65">65%</strong>
-                <span>مكتمل</span>
-              </div>
-            </div>
-            <p class="summary" id="summary" aria-live="polite">3 مهام مكتملة، 1 متبقية</p>
-            <p class="cheer" id="cheer" hidden>أنهيت جدول اليوم.</p>
-            <div class="stats">
-              <div class="stat">
-                <strong id="done-count">3</strong>
-                <span>مهام مكتملة</span>
-              </div>
-              <div class="stat">
-                <strong id="left-count">1</strong>
-                <span>متبقية</span>
-              </div>
-            </div>
-          </section>
+        <div class="shade" id="shade" hidden>
+          <div class="shade__head">
+            <strong>التنبيهات</strong>
+            <button type="button" id="shade-close">إغلاق</button>
+          </div>
+          <div id="shade-list"></div>
+        </div>
 
-          <section class="card card--tasks" aria-labelledby="tasks-title">
-            <div class="card__head">
-              <h2 id="tasks-title">مهام اليوم</h2>
-              <span class="count-pill">4 مهام</span>
-            </div>
-            <ul class="task-list">
-              <li>
-                <button class="task is-done" type="button" data-id="cs201" data-weight="20" data-minutes="480" aria-pressed="true">
-                  <span class="task__check" aria-hidden="true"></span>
-                  <span class="task__body">
-                    <span class="task__heading">
-                      <span class="task__title">محاضرة CS201</span>
-                      <span class="task__badge" hidden>التالي</span>
-                    </span>
-                    <span class="task__detail">كلية الحاسب الآلي ونظم المعلومات · قاعة 214</span>
-                  </span>
-                  <time class="task__time" datetime="08:00">08:00 ص</time>
-                </button>
-              </li>
-              <li>
-                <button class="task is-done" type="button" data-id="math" data-weight="25" data-minutes="630" aria-pressed="true">
-                  <span class="task__check" aria-hidden="true"></span>
-                  <span class="task__body">
-                    <span class="task__heading">
-                      <span class="task__title">حل تكليف الرياضيات</span>
-                      <span class="task__badge" hidden>التالي</span>
-                    </span>
-                    <span class="task__detail">MATH110 · تسليم إلكتروني</span>
-                  </span>
-                  <time class="task__time" datetime="10:30">10:30 ص</time>
-                </button>
-              </li>
-              <li>
-                <button class="task is-done" type="button" data-id="design" data-weight="20" data-minutes="780" aria-pressed="true">
-                  <span class="task__check" aria-hidden="true"></span>
-                  <span class="task__body">
-                    <span class="task__heading">
-                      <span class="task__title">التحضير لمشروع التصميم</span>
-                      <span class="task__badge" hidden>التالي</span>
-                    </span>
-                    <span class="task__detail">مراجعة المخطط قبل اجتماع الفريق</span>
-                  </span>
-                  <time class="task__time" datetime="13:00">01:00 م</time>
-                </button>
-              </li>
-              <li>
-                <button class="task is-next" type="button" data-id="meet" data-weight="35" data-minutes="960" aria-pressed="false">
-                  <span class="task__check" aria-hidden="true"></span>
-                  <span class="task__body">
-                    <span class="task__heading">
-                      <span class="task__title">اجتماع فريق التصميم</span>
-                      <span class="task__badge">التالي</span>
-                    </span>
-                    <span class="task__detail">مبنى 12 · قاعة المشروع</span>
-                  </span>
-                  <time class="task__time" datetime="16:00">04:00 م</time>
-                </button>
-              </li>
-            </ul>
-          </section>
+        <div class="toast-wrap" id="toasts" aria-live="polite"></div>
 
-          <section class="card card--alerts" aria-labelledby="alerts-title">
-            <div class="card__head">
-              <h2 id="alerts-title">التنبيهات العاجلة</h2>
-              <span class="live"><span class="pulse" aria-hidden="true"></span> مباشر</span>
-            </div>
-            <p class="card__note">تذكير عاجل عبر الرسائل النصية SMS حتى ما يفوتك موعد.</p>
-            <ul class="alert-list">
-              <li class="alert">
-                <span class="alert__tag">SMS</span>
-                <p class="alert__text">تنبيه: متبقي ساعة لتسليم تكليف الرياضيات</p>
-                <time class="alert__time">قبل ساعة</time>
-              </li>
-              <li class="alert">
-                <span class="alert__tag">SMS</span>
-                <p class="alert__text">اجتماع فريق التصميم الساعة 4:00 م في مبنى 12</p>
-                <time class="alert__time">اليوم</time>
-              </li>
-            </ul>
-          </section>
-        </main>
+        <main class="stage" id="stage"></main>
 
-        <div class="home-bar" aria-hidden="true"><span></span></div>
+        <nav class="dock" aria-label="تطبيقات التابلت">
+          <button class="dock__btn" type="button" data-view="home" aria-current="page">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg>
+            <span>اليوم</span>
+          </button>
+          <button class="dock__btn" type="button" data-view="schedule">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2Zm11 8H6v10h12V10Z"/></svg>
+            <span>الجدول</span>
+          </button>
+          <button class="dock__btn" type="button" data-view="tasks">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 5h16v3H4V5Zm0 5.5h16v3H4v-3ZM4 16h10v3H4v-3Z"/></svg>
+            <span>المهام</span>
+          </button>
+          <button class="dock__btn" type="button" data-view="inbox">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 5h16v10H7l-3 3V5Z"/></svg>
+            <span>الرسائل</span>
+            <i class="dock__badge" id="unread-badge" hidden>0</i>
+          </button>
+          <button class="dock__btn" type="button" data-view="profile">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4Z"/></svg>
+            <span>حسابي</span>
+          </button>
+        </nav>
+
+        <section class="welcome" id="welcome" aria-label="الترحيب">
+          <div class="hello" id="hello">
+            <p class="hello-kicker">UQU Tablet OS</p>
+            <h2 class="hello-word">مرحبا</h2>
+            <p class="hello-sub">جامعة أم القرى</p>
+          </div>
+          <form class="ask" id="ask" hidden>
+            <p class="ask-progress" id="ask-progress">1 من 3</p>
+            <h2 id="ask-title">وش اسمك؟</h2>
+            <p class="ask-note" id="ask-note">الاسم يظهر في شريط التابلت، وتقدر تعدّله بعدين.</p>
+            <input class="ask-input" id="ask-input" name="answer" autocomplete="name">
+            <div class="swatches" id="ask-swatches" hidden></div>
+            <label class="color-line" id="ask-color-line" hidden>
+              <span>أو اختر لون أدق</span>
+              <input type="color" id="ask-color" value="#0f766e">
+            </label>
+            <p class="ask-error" id="ask-error" role="alert"></p>
+            <button class="ask-next" id="ask-next" type="submit">التالي</button>
+          </form>
+        </section>
       </div>
     </div>
   </div>
