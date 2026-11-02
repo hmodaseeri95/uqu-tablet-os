@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: uqu-tablet-os
+    runtime: static
+    buildCommand: echo UQU Tablet OS
+    staticPublishPath: .
